@@ -13,7 +13,7 @@ export function PageHeader({ title, subtitle, action }: PageHeaderProps) {
     <motion.div
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex items-start justify-between gap-4 px-6 pt-8 pb-6 border-b border-border/50"
+      className="sticky top-0 z-10 flex items-start justify-between gap-4 px-6 pt-8 pb-6 border-b border-border/50 bg-background/95 backdrop-blur-md"
     >
       <div>
         <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
