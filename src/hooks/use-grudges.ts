@@ -181,6 +181,17 @@ export function useUpdateGrudge() {
 export function useDeleteGrudge() {
   const remove = async (id: string): Promise<boolean> => {
     const supabase = createClient()
+
+    const { data: uploads } = await supabase
+      .from('uploads')
+      .select('storage_path')
+      .eq('grudge_id', id)
+
+    if (uploads && uploads.length > 0) {
+      const paths = uploads.map((u: { storage_path: string }) => u.storage_path)
+      await supabase.storage.from('grudge-media').remove(paths)
+    }
+
     const { error } = await supabase.from('grudges').delete().eq('id', id)
     if (error) { toast.error('Erreur lors de la suppression'); return false }
     toast.success('Rancune supprimée. Le karma fera le reste.')

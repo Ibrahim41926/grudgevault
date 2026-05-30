@@ -116,8 +116,8 @@ export function ReminderDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="grudge-glass max-w-lg border-border/50">
-        <DialogHeader>
+      <DialogContent className="grudge-glass flex max-h-[90vh] max-w-lg flex-col border-border/50">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <Bell className="w-5 h-5 text-primary" />
             Programmer un rappel
@@ -127,7 +127,8 @@ export function ReminderDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="mt-2 space-y-4">
+        <form onSubmit={handleSubmit} className="mt-2 flex min-h-0 flex-1 flex-col">
+          <div className="flex-1 space-y-4 overflow-y-auto pr-1">
           <div className="rounded-2xl border border-primary/20 bg-primary/8 p-4">
             <div className="flex items-start gap-3">
               <div className="mt-0.5 flex h-9 w-9 items-center justify-center rounded-xl bg-primary/12 text-primary">
@@ -243,8 +244,9 @@ export function ReminderDialog({
             <span className="font-medium text-foreground">Aperçu du comportement :</span>{' '}
             la description détaillée reste la source principale. La consigne aide surtout à ajuster le style du rappel.
           </div>
+          </div>
 
-          <div className="flex gap-2 pt-2">
+          <div className="flex flex-shrink-0 gap-2 pt-4">
             <Button type="button" variant="outline" className="flex-1" onClick={onClose}>
               Annuler
             </Button>

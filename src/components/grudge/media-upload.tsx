@@ -46,15 +46,26 @@ export function MediaUpload({ grudgeId, existingUploads }: MediaUploadProps) {
   const [recording, setRecording] = useState(false)
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null)
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
+  const [audioMime, setAudioMime] = useState<string>('audio/webm')
   const [recordingTime, setRecordingTime] = useState(0)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
+  const getSupportedMimeType = (): string => {
+    const candidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg']
+    return candidates.find(t => MediaRecorder.isTypeSupported(t)) ?? ''
+  }
+
   const startRecording = async () => {
+    if (typeof MediaRecorder === 'undefined') {
+      toast.error('Enregistrement audio non supporté sur ce navigateur.')
+      return
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const recorder = new MediaRecorder(stream)
+      const mimeType = getSupportedMimeType()
+      const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream)
       mediaRecorderRef.current = recorder
       chunksRef.current = []
 
@@ -63,8 +74,10 @@ export function MediaUpload({ grudgeId, existingUploads }: MediaUploadProps) {
       }
 
       recorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: 'audio/webm' })
+        const type = recorder.mimeType || 'audio/webm'
+        const blob = new Blob(chunksRef.current, { type })
         setAudioBlob(blob)
+        setAudioMime(type)
         setAudioUrl(URL.createObjectURL(blob))
         stream.getTracks().forEach(t => t.stop())
       }
@@ -88,13 +101,15 @@ export function MediaUpload({ grudgeId, existingUploads }: MediaUploadProps) {
     if (audioUrl) URL.revokeObjectURL(audioUrl)
     setAudioBlob(null)
     setAudioUrl(null)
+    setAudioMime('audio/webm')
     setRecordingTime(0)
   }
 
   const saveRecording = async () => {
     if (!audioBlob) return
-    const fileName = `vocal_${format(new Date(), 'yyyy-MM-dd_HH-mm')}.webm`
-    const file = new File([audioBlob], fileName, { type: 'audio/webm' })
+    const ext = audioBlob.type.includes('mp4') ? 'mp4' : audioBlob.type.includes('ogg') ? 'ogg' : 'webm'
+    const fileName = `vocal_${format(new Date(), 'yyyy-MM-dd_HH-mm')}.${ext}`
+    const file = new File([audioBlob], fileName, { type: audioBlob.type })
     const result = await upload(grudgeId, file)
     if (result) {
       setUploads(prev => [...prev, result])
@@ -198,7 +213,11 @@ export function MediaUpload({ grudgeId, existingUploads }: MediaUploadProps) {
 
           {audioBlob && !recording && (
             <div className="space-y-2">
-              {audioUrl && <audio src={audioUrl} controls className="h-9 w-full" />}
+              {audioUrl && (
+                <audio controls className="h-9 w-full">
+                  <source src={audioUrl} type={audioMime} />
+                </audio>
+              )}
               <div className="flex gap-2">
                 <Button type="button" size="sm" variant="ghost" className="flex-1" onClick={discardRecording}>
                   <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
